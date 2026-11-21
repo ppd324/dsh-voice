@@ -21,3 +21,7 @@ dist/
 
 # model data
 models/
+
+# python build artifacts
+__pycache__/
+*.pyc
