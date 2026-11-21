@@ -115,7 +115,7 @@ Copy `config.example.json` to `config.json` and adjust. The important keys:
 | `muteWhenSystemAudio` | `true` | pause wake detection while the PC is playing audio |
 | `systemAudioThreshold` | `0.03` | peak level (0–1) that counts as "playing" |
 | `tts.voice` | `zh-CN-XiaoxiaoNeural` | any edge-tts voice |
-| `corrections` | `{}` | ASR fixes, e.g. `{"yjg":"yjjpaopao"}` |
+| `corrections` | `{}` | ASR fixes, e.g. `{"misheard":"corrected"}` |
 | `aliases` | `{}` | nicknames → handles, learned from the agent at runtime |
 
 ## Troubleshooting

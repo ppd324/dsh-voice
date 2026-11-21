@@ -737,6 +737,11 @@ async function handleSegment(samples) {
   if (!text) return;
   const corrected = applyCorrections(CONFIG.corrections, text);
   if (corrected !== text) { log('corrected:', text, '->', corrected); text = corrected; }
+  await processUtterance(text, seconds);
+}
+
+// 文本处理(来自麦克风识别, 或 automation queue 注入): 唤醒/指令/追问都在这里
+async function processUtterance(text, seconds) {
   log(`heard (${seconds.toFixed(1)}s):`, text);
   // 只有确实要响应时才把这句话显示到球上: 唤醒词命中、或正在待命/追问;
   // 否则播放中的视频/音乐会让球不停弹出
@@ -809,6 +814,30 @@ async function handleSegment(samples) {
   speak('我在');   // 唤醒应答, 不阻塞后续识别
   armWithTimeout(CONFIG.armTimeoutMs);
 }
+
+// 自动化/演示入口: automation 打开时, command-queue.jsonl 里每行 {"text":"..."} 都会被
+// 当成一次识别结果处理(与麦克风路径完全相同), 便于脚本化演示与回归测试。
+const QUEUE_FILE = path.join(__dirname, 'command-queue.jsonl');
+let queueOffset = 0;
+function pollAutomationQueue() {
+  if (CONFIG.automation !== true) { queueOffset = 0; return; }
+  try {
+    const buf = fs.readFileSync(QUEUE_FILE);
+    if (buf.length <= queueOffset) { if (buf.length < queueOffset) queueOffset = 0; return; }
+    const chunk = buf.slice(queueOffset).toString('utf8');
+    queueOffset = buf.length;
+    for (const line of chunk.split(String.fromCharCode(10))) {
+      const t = line.trim();
+      if (!t) continue;
+      let text = t;
+      try { const j = JSON.parse(t); text = String(j.text || ''); } catch (e) {}
+      if (!text) continue;
+      log('queue:', text);
+      processUtterance(text, 1.2).catch((e) => log('queue error:', e.message));
+    }
+  } catch (e) {}
+}
+setInterval(pollAutomationQueue, 300).unref?.();
 
 async function drainQueue() {
   if (busy) return;
