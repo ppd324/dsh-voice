@@ -14,13 +14,14 @@ answers out loud.
 ```
 
 <p align="center">
-  <img src="docs/demo.gif" width="820"
-       alt="Three-turn demo: wake word, open the calculator, ask it to compute 123 x 45">
+  <img src="docs/demo.gif" width="860"
+       alt="Wake word, then the calculator opens at the top-left while the orb narrates">
 </p>
 
-*Three turns from one recording: wake → "打开计算器" → "算一下一百二十三乘以四十五" →
-"把计算器关掉", with the session keeping context between them. Full-length clip:
-[docs/demo.mp4](docs/demo.mp4) (silent screen capture).*
+*Full-screen capture, with sound: wake → "打开计算器" → "算一下一百二十三乘以四十五" →
+"把计算器关掉". The clip above is the first turn — you can watch the calculator actually
+open in the top-left corner. The complete three-turn recording, session context included,
+is [docs/demo.mp4](docs/demo.mp4) (3.4 MB, audio included).*
 
 ## What it does
 
