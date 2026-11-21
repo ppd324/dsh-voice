@@ -13,6 +13,15 @@ answers out loud.
  orb:  (thinking) 已经帮您把抖音最大化了
 ```
 
+<p align="center">
+  <img src="docs/demo.gif" width="820"
+       alt="Three-turn demo: wake word, open the calculator, ask it to compute 123 x 45">
+</p>
+
+*Three turns from one recording: wake → "打开计算器" → "算一下一百二十三乘以四十五" →
+"把计算器关掉", with the session keeping context between them. Full-length clip:
+[docs/demo.mp4](docs/demo.mp4) (silent screen capture).*
+
 ## What it does
 
 - **Local speech recognition** — SenseVoiceSmall (int8) + Silero VAD through
