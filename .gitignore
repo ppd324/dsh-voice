@@ -1,0 +1,23 @@
+# runtime state
+config.json
+state.json
+daemon.pid
+watchdog.pid
+audio-activity.pid
+audio-activity.json
+orb.heartbeat
+watchdog.heartbeat
+orb.log
+daemon.log
+watchdog.log
+voice-session.json
+dsh-exe.txt
+
+# caches and build output
+cache/
+dist/
+*.wav
+*.mp3
+
+# model data
+models/

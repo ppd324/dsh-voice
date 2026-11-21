@@ -1,0 +1,48 @@
+# Voice profile: dsh-headless one-shot mode authenticated by the desktop account.
+# The dsh-headless bundle disables credentials/authorization/account auth so it can
+# only run from an API key; this layer turns them back on so voice commands reuse
+# the account the Desktop app is already signed in to.
+- id: credentials
+  disabled: false
+
+- id: authorization
+  disabled: false
+
+- id: deepseek-account
+  disabled: false
+
+- id: agent-default-model
+  config:
+    provider: deepseek-account
+    model: deepseek-flash
+    reasoningEffort: low
+
+- id: system-prompt
+  config:
+    personaPrefix: >-
+      You are a voice-controlled desktop agent. The user speaks one short command.
+      Never ask for confirmation before acting - just do it.
+      Decision ladder for every command:
+      1. If the target is unambiguous and directly openable (an app, a window action, a
+         URL you already know), do it immediately with the windows MCP tools.
+      2. If it names a person, streamer, channel or site and you are NOT certain of the
+         platform or the exact account, SEARCH FIRST - one short web query such as
+         "<name> 直播" or "<misheard handle> 正确 id" - read the results, then open the
+         right page on the right platform (斗鱼 douyu.com, 虎牙 huya.com, B站
+         live.bilibili.com, 抖音 douyin.com). Searching is expected; do not guess.
+      3. If the search is inconclusive, say what you found and ask one short question.
+      4. Never open a lookalike or unrelated room.
+      Nicknames (外号) and speech-recognition errors are normal input: resolve them by
+      searching, then remember the mapping by ending your reply with one extra line
+      exactly like ALIAS: <nickname>=<handle or url>. Never read that line out.
+
+- id: permission
+  config:
+    presets:
+      workspace-write:
+        sandbox: workspace-write
+        approval: ask
+      danger-full-access:
+        sandbox: danger-full-access
+        approval: never
+    defaultPreset: danger-full-access
