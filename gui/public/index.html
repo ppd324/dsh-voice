@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>DSH Voice</title>
+<link rel="icon" type="image/x-icon" href="/favicon.ico?v=2">
+<link rel="icon" type="image/png" sizes="32x32" href="/icon-32.png?v=2">
+<link rel="icon" type="image/png" sizes="64x64" href="/icon-64.png?v=2">
+<link rel="apple-touch-icon" href="/icon-256.png?v=2">
+<meta name="theme-color" content="#5686fe">
+<style>
+  /* Tokens mirror the DSH client: neutral-bluish scale, deepseek brand, soft elevation. */
+  :root{
+    --bg:#f7f8fa; --panel:#ffffff; --sidebar:#fbfbfc;
+    --line-1:rgba(15,17,21,.06); --line-2:rgba(15,17,21,.10); --line-3:rgba(15,17,21,.14);
+    --t1:#0f1115; --t2:#5c6370; --t3:#8a909b;
+    --brand:#5686fe; --brand-hover:#4176e6; --brand-soft:#e4edfd;   /* deepseek-450 / 500 / 100 */
+    --ok:#1a9e55; --ok-soft:#e8f7ee; --warn:#b26a00; --warn-soft:#fff4e5; --err:#d92d20; --err-soft:#fef3f2;
+    --r:14px; --r-sm:9px;
+    --shadow:0 1px 2px rgba(15,17,21,.04), 0 0 0 .5px rgba(15,17,21,.06);
+    --shadow-hover:0 4px 14px rgba(15,17,21,.07), 0 0 0 .5px rgba(15,17,21,.08);
+    --mono:ui-monospace,SFMono-Regular,Consolas,"Liberation Mono",monospace;
+    --font:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei UI","PingFang SC",system-ui,sans-serif;
+  }
+  /* Dark palette mirrors the DSH client's dark theme tokens. */
+  html[data-theme="dark"]{
+    --bg:#151517;              /* neutral-bluish-950 */
+    --panel:#232324;           /* neutral-bluish-875 */
+    --sidebar:#1b1b1c;         /* neutral-bluish-900 */
+    --line-1:rgba(255,255,255,.06); --line-2:rgba(255,255,255,.12); --line-3:rgba(255,255,255,.18);
+    --t1:#f9fafb; --t2:#c9cdd3; --t3:#a0a6ae;
+    --brand:#5686fe; --brand-hover:#7aaaff; --brand-soft:rgba(86,134,254,.18);
+    --ok:#4ade80; --ok-soft:rgba(34,197,94,.16); --warn:#fbbf24; --warn-soft:rgba(245,158,11,.16);
+    --err:#f87171; --err-soft:rgba(239,68,68,.16);
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 0 0 .5px rgba(255,255,255,.06);
+    --shadow-hover:0 6px 18px rgba(0,0,0,.45), 0 0 0 .5px rgba(255,255,255,.1);
+  }
+  html[data-theme="dark"] .icon.neutral{background:#2c2c2e;color:#c9cdd3}
+  html[data-theme="dark"] .path,
+  html[data-theme="dark"] .log{background:#1c1c1e;border-color:rgba(255,255,255,.06)}
+  html[data-theme="dark"] .card,
+  html[data-theme="dark"] .panel{background:var(--panel)}
+  html[data-theme="dark"] .content::-webkit-scrollbar-thumb{background:rgba(255,255,255,.16);border-color:var(--bg)}
+  html[data-theme="dark"] .content::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.26)}
+  html[data-theme="dark"] select,
+  html[data-theme="dark"] input[type=text],
+  html[data-theme="dark"] input[type=number]{background:#2a2a2c;color:var(--t1);border-color:var(--line-2)}
+  html[data-theme="dark"] .segmented{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.06)}
+  html[data-theme="dark"] .segmented button{background:#232324;color:var(--t2)}
+  html[data-theme="dark"] .segmented button:hover{background:#2c2c2e;color:var(--t1)}
+  html[data-theme="dark"] .nav-item:hover{background:rgba(255,255,255,.07)}
+  html[data-theme="dark"] .nav-item.active{background:rgba(86,134,254,.16);color:#9dbcff}
+  html[data-theme="dark"] .icon-btn,
+  html[data-theme="dark"] button{background:#2a2a2c;border-color:var(--line-2);color:var(--t1)}
+  html[data-theme="dark"] .icon-btn:hover,
+  html[data-theme="dark"] button:hover{background:#333335;border-color:var(--line-3)}
+  html[data-theme="dark"] button.primary{background:#3563cc;border-color:#3563cc;color:#fff}
+  html[data-theme="dark"] button.primary:hover{background:#4176e6;border-color:#4176e6}
+  body{color-scheme:light dark}
+  html[data-theme="dark"] body{color-scheme:dark}
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;display:flex;overflow:hidden;background:var(--bg);color:var(--t1);
+       font:14px/22px var(--font);-webkit-font-smoothing:antialiased}
+  svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.7;
+      stroke-linecap:round;stroke-linejoin:round}
+
+  /* ---------------- sidebar ---------------- */
+  aside{width:212px;flex:none;background:var(--sidebar);border-right:1px solid var(--line-1);
+        display:flex;flex-direction:column;padding:16px 12px}
+  .brand{display:flex;align-items:center;gap:9px;padding:2px 8px 18px}
+  .brand .mark{width:22px;height:22px;border-radius:7px;background:linear-gradient(140deg,var(--brand),var(--brand-hover));
+               display:grid;place-items:center;color:#fff;font-size:10.5px;font-weight:700;letter-spacing:-.3px}
+  .brand span{font-weight:600;font-size:13.5px;letter-spacing:-.2px}
+  .nav{display:flex;flex-direction:column;gap:1px}
+  .nav-item{display:flex;align-items:center;gap:9px;padding:7px 9px;border-radius:8px;
+            color:var(--t2);font-size:13px;cursor:pointer;user-select:none;transition:background .12s}
+  .nav-item:hover{background:rgba(15,17,21,.045);color:var(--t1)}
+  .nav-item.active{background:var(--brand-soft);color:#1c4fd4;font-weight:500}
+  .nav-item.active:hover{background:var(--brand-soft)}
+  .nav-item.active svg{color:var(--brand)}
+  .side-foot{margin-top:auto;display:flex;flex-direction:column;gap:10px;padding-top:14px;border-top:1px solid var(--line-1)}
+  .daemon{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--t2);padding:0 3px}
+  .dot{width:7px;height:7px;border-radius:50%;background:#c3c8d0;flex:none;transition:background .2s}
+  .dot.on{background:var(--ok);box-shadow:0 0 0 3px rgba(26,158,85,.15)}
+  .segmented{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line-1);
+             border:1px solid var(--line-1);border-radius:8px;overflow:hidden}
+  .segmented button{border:0;border-radius:0;background:#fff;padding:6px 0;font-size:12.5px;color:var(--t2)}
+  .segmented button:hover{background:#f2f4f7;color:var(--t1)}
+  .segmented button.active{background:var(--brand-soft);color:var(--brand);font-weight:500}
+  #themeSeg{grid-template-columns:repeat(3,1fr)}
+  .version{font-size:11px;color:var(--t3);padding:0 3px}
+
+  /* ---------------- main ---------------- */
+  main{flex:1;min-width:0;display:flex;flex-direction:column;background:var(--bg)}
+  header{flex:none;padding:22px 28px 0;display:flex;align-items:flex-start;gap:14px}
+  header .titles h1{margin:0;font-size:17px;font-weight:600;letter-spacing:-.25px}
+  header .titles p{margin:3px 0 0;font-size:12.5px;color:var(--t3)}
+  .spacer{flex:1}
+  .icon-btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line-2);background:#fff;
+            color:var(--t2);border-radius:8px;padding:6px 11px;font-size:12.5px;cursor:pointer;
+            box-shadow:0 0 0 .5px rgba(15,17,21,.03)}
+  .icon-btn:hover{background:#f7f8fa;color:var(--t1);border-color:var(--line-3)}
+  .content{flex:1;overflow:auto;padding:18px 28px 36px}
+
+  /* ---------------- groups & cards ---------------- */
+  .group{margin-top:6px}
+  .group + .group{margin-top:26px}
+  .group-head{display:flex;align-items:center;gap:8px;margin:0 0 10px 2px}
+  .group-head .label{font-size:12px;font-weight:600;color:var(--t3);letter-spacing:.4px;text-transform:uppercase}
+  .group-head .rule{flex:1;height:1px;background:var(--line-1)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px}
+  .card{display:flex;flex-direction:column;gap:10px;background:var(--panel);border:1px solid var(--line-1);
+        border-radius:var(--r);padding:15px 16px 14px;box-shadow:var(--shadow);transition:box-shadow .16s,transform .16s}
+  .card:hover{box-shadow:var(--shadow-hover);transform:translateY(-1px)}
+  .card-top{display:flex;align-items:center;gap:11px}
+  .icon{width:32px;height:32px;flex:none;border-radius:9px;display:grid;place-items:center;
+        background:var(--brand-soft);color:var(--brand)}
+  .icon.neutral{background:#f1f3f6;color:#5c6370}
+  .icon.ok{background:var(--ok-soft);color:var(--ok)}
+  .icon.warn{background:var(--warn-soft);color:var(--warn)}
+  .card-title{min-width:0;flex:1}
+  .card-title .name{font-size:13.5px;font-weight:500;letter-spacing:-.1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .card-title .meta{margin-top:2px;font-size:11.5px;color:var(--t3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .chip{flex:none;font-size:11px;font-weight:500;padding:2px 8px;border-radius:6px;letter-spacing:.1px}
+  .chip.ok{color:var(--ok);background:var(--ok-soft)}
+  .chip.miss{color:var(--warn);background:var(--warn-soft)}
+  .path{font-family:var(--mono);font-size:11.5px;color:var(--t3);background:#f8f9fb;border:1px solid var(--line-1);
+        border-radius:7px;padding:6px 9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .actions:empty{display:none}
+  button{font:inherit;font-size:12.5px;border-radius:8px;border:1px solid var(--line-2);background:#fff;color:var(--t1);
+         padding:5px 12px;cursor:pointer;transition:background .12s,border-color .12s}
+  button:hover{background:#f7f8fa;border-color:var(--line-3)}
+  button.primary{background:var(--brand);border-color:var(--brand);color:#fff;font-weight:500}
+  button.primary:hover{background:var(--brand-hover);border-color:var(--brand-hover)}
+  button.ghost{color:var(--t2)}
+  button:disabled{opacity:.5;cursor:default}
+  select{flex:1;min-width:0;font:inherit;font-size:12.5px;color:var(--t1);background:#fff;
+         border:1px solid var(--line-2);border-radius:8px;padding:5px 8px}
+  select:focus,button:focus-visible{outline:2px solid var(--brand-soft);outline-offset:1px;border-color:var(--brand)}
+  .bar{height:4px;border-radius:3px;background:#eef0f4;overflow:hidden;display:none}
+  .bar > i{display:block;height:100%;width:0;background:var(--brand);transition:width .25s}
+  .log{font:11px/1.55 var(--mono);color:var(--t2);background:#f8f9fb;border:1px solid var(--line-1);
+       border-radius:8px;padding:7px 9px;max-height:104px;overflow:auto;display:none;white-space:pre-wrap}
+
+  /* ---------------- forms ---------------- */
+  .panel{background:var(--panel);border:1px solid var(--line-1);border-radius:var(--r);
+         box-shadow:var(--shadow);max-width:760px;padding:4px 22px 20px}
+  .panel h2{margin:20px 0 10px;font-size:13px;font-weight:600;letter-spacing:-.1px}
+  .panel h2:first-child{margin-top:18px}
+  .field{display:grid;grid-template-columns:168px 1fr;gap:16px;align-items:start;padding:11px 0;
+         border-top:1px solid var(--line-1)}
+  .field:first-of-type{border-top:0}
+  .field > label{font-size:12.5px;color:var(--t2);padding-top:7px}
+  input[type=text],input[type=number]{width:100%;max-width:300px;background:#fff;color:var(--t1);font:inherit;font-size:13px;
+       border:1px solid var(--line-2);border-radius:8px;padding:6px 10px}
+  select.big{max-width:300px;flex:none;padding:6px 10px;font-size:13px}
+  input[type=text]:focus,input[type=number]:focus{outline:2px solid var(--brand-soft);outline-offset:1px;border-color:var(--brand)}
+  input[type=checkbox]{width:15px;height:15px;accent-color:var(--brand);margin-top:7px}
+  .hint{margin-top:3px;font-size:11.5px;line-height:18px;color:var(--t3)}
+  .footer{margin-top:20px;display:flex;align-items:center;gap:12px}
+  .saved{font-size:12px;color:var(--ok);opacity:0;transition:opacity .2s}
+  .saved.show{opacity:1}
+  .content::-webkit-scrollbar{width:10px}
+  .content::-webkit-scrollbar-thumb{background:rgba(15,17,21,.14);border-radius:8px;border:3px solid var(--bg)}
+  .content::-webkit-scrollbar-thumb:hover{background:rgba(15,17,21,.22)}
+  .content::-webkit-scrollbar-track{background:transparent}
+  .card.no-meta .card-title .meta{display:none}
+</style>
+</head>
+<body>
+<aside>
+  <div class="brand"><span class="mark">DS</span><span>DSH Voice</span></div>
+  <nav class="nav">
+    <div class="nav-item active" data-tab="components">
+      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.6"/><rect x="14" y="3" width="7" height="7" rx="1.6"/><rect x="3" y="14" width="7" height="7" rx="1.6"/><rect x="14" y="14" width="7" height="7" rx="1.6"/></svg>
+      组件
+    </div>
+    <div class="nav-item" data-tab="voice">
+      <svg viewBox="0 0 24 24"><path d="M12 3v18"/><path d="M8 7v10"/><path d="M16 7v10"/><path d="M4 10v4"/><path d="M20 10v4"/></svg>
+      语音与唤醒
+    </div>
+    <div class="nav-item" data-tab="appearance">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 3.5v3"/><path d="M12 17.5v3"/><path d="M3.5 12h3"/><path d="M17.5 12h3"/></svg>
+      外观
+    </div>
+    <div class="nav-item" data-tab="behavior">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5v5l3 2"/></svg>
+      行为
+    </div>
+  </nav>
+  <div class="side-foot">
+    <div class="daemon"><span class="dot" id="daemonDot"></span><span id="daemonText">检查中…</span></div>
+    <div class="segmented">
+      <button id="btnStart">启动</button>
+      <button id="btnStop">停止</button>
+    </div>
+    <div class="version">DSH Voice 0.1.0</div>
+  </div>
+</aside>
+
+<main>
+  <header>
+    <div class="titles"><h1 id="pageTitle">组件</h1><p id="pageSub">正在检测运行环境…</p></div>
+    <div class="spacer"></div>
+    <button class="icon-btn" id="btnRefresh">
+      <svg viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 5v6h-6"/></svg>
+      重新检测
+    </button>
+  </header>
+
+  <div class="content">
+    <section id="tab-components"><div id="groups"></div></section>
+
+    <section id="tab-voice" style="display:none">
+      <div class="panel">
+        <h2>唤醒</h2>
+        <div class="field"><label>唤醒词</label>
+          <div><input type="text" id="triggers" placeholder="你好电脑, 嘿电脑">
+            <div class="hint">多个用英文逗号分隔;只有听到唤醒词才开始接收指令</div></div>
+        </div>
+        <div class="field"><label>唤醒词前允许的杂字</label>
+          <div><input type="number" id="wakeLeadChars" min="0" max="4">
+            <div class="hint">0 = 唤醒词必须在句首。调大更容易唤醒,也更容易被电视声误触发</div></div>
+        </div>
+        <div class="field"><label>允许只喊「电脑」</label>
+          <div><input type="checkbox" id="allowBareWake">
+            <div class="hint">关闭更安全(推荐)</div></div>
+        </div>
+        <h2>朗读</h2>
+        <div class="field"><label>音色</label>
+          <div><select class="big" id="voice">
+            <option value="zh-CN-XiaoxiaoNeural">晓晓 · 女(默认)</option>
+            <option value="zh-CN-YunxiNeural">云希 · 男</option>
+            <option value="zh-CN-XiaoyiNeural">晓伊 · 女</option>
+            <option value="zh-CN-YunjianNeural">云健 · 男(沉稳)</option>
+            <option value="zh-CN-liaoning-XiaobeiNeural">晓北 · 东北</option>
+          </select></div>
+        </div>
+        <div class="field"><label>语速</label>
+          <div><input type="text" id="rate" placeholder="+0%"><div class="hint">例如 +10%、-8%</div></div>
+        </div>
+        <div class="footer"><button class="primary" id="saveVoice">保存并生效</button>
+          <span class="saved" id="savedVoice">已保存, 守护进程已热加载</span></div>
+      </div>
+    </section>
+
+    <section id="tab-appearance" style="display:none">
+      <div class="panel">
+        <h2>语音球</h2>
+        <div class="field"><label>图标样式</label>
+          <div><select class="big" id="orbStyle">
+            <option value="bot">机器人小脸(默认)</option>
+            <option value="bars">声波条</option>
+            <option value="logo">自定义图片</option>
+          </select>
+          <div class="hint">声波条会随音量起伏;机器人小脸有表情与眨眼</div></div>
+        </div>
+        <div class="field"><label>自定义图片</label>
+          <div><input type="text" id="orbLogo" placeholder="C:/Users/你/Pictures/logo.png">
+          <div class="hint">PNG 最佳(支持透明背景),会按 56px 等比缩放</div></div>
+        </div>
+        <h2>界面</h2>
+        <div class="field"><label>主题</label>
+          <div><select class="big" id="themeSel">
+            <option value="auto">跟随系统</option>
+            <option value="light">浅色</option>
+            <option value="dark">深色</option>
+          </select>
+          <div class="hint">切换后立即生效,无需保存;跟随系统时 Windows 改深浅色会同步变化</div></div>
+        </div>
+        <div class="footer"><button class="primary" id="saveOrb">保存并生效</button>
+          <span class="saved" id="savedOrb">已保存, 球会立即切换</span></div>
+      </div>
+    </section>
+
+    <section id="tab-behavior" style="display:none">
+      <div class="panel">
+        <h2>时序</h2>
+        <div class="field"><label>唤醒后等待指令</label>
+          <div><input type="number" id="armTimeoutMs" min="5" max="120"><div class="hint">单位秒;超时未说话则回到休眠</div></div>
+        </div>
+        <div class="field"><label>回答后免唤醒窗口</label>
+          <div><input type="number" id="followUpMs" min="0" max="120"><div class="hint">单位秒;0 = 每次都要喊唤醒词(防外放误触发)</div></div>
+        </div>
+        <h2>防误触发</h2>
+        <div class="field"><label>电脑放音时休眠</label>
+          <div><input type="checkbox" id="muteWhenSystemAudio"><div class="hint">看视频、听歌时暂停唤醒检测</div></div>
+        </div>
+        <div class="field"><label>朗读时静音麦克风</label>
+          <div><input type="checkbox" id="muteWhileSpeaking"><div class="hint">避免把自己的声音再识别一遍</div></div>
+        </div>
+        <div class="footer"><button class="primary" id="saveBehavior">保存并生效</button>
+          <span class="saved" id="savedBehavior">已保存</span></div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+
+// Theme: follow the OS by default, remember an explicit choice.
+const THEME_KEY = 'dsh-voice-theme';
+const darkQuery = window.matchMedia('(prefers-color-scheme: dark)');
+let themeMode = localStorage.getItem(THEME_KEY) || 'auto';
+// ?theme=dark|light lets tooling open a specific scheme without touching the stored choice
+const urlTheme = new URLSearchParams(location.search).get('theme');
+if (urlTheme === 'dark' || urlTheme === 'light') themeMode = urlTheme;
+function applyTheme(mode) {
+  const dark = mode === 'dark' || (mode === 'auto' && darkQuery.matches);
+  document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+  const sel = document.getElementById('themeSel');
+  if (sel) sel.value = mode;
+}
+applyTheme(themeMode);
+darkQuery.addEventListener('change', () => { if (themeMode === 'auto') applyTheme('auto'); });
+document.addEventListener('DOMContentLoaded', () => {
+  const sel = document.getElementById('themeSel');
+  if (!sel) return;
+  sel.value = themeMode;
+  sel.addEventListener('change', () => {
+    themeMode = sel.value;
+    localStorage.setItem(THEME_KEY, themeMode);
+    applyTheme(themeMode);
+  });
+});
+const TITLES = { components: '组件', voice: '语音与唤醒', appearance: '外观', behavior: '行为' };
+const GROUPS = [
+  { label: '运行时', ids: ['dsh', 'model', 'ffmpeg', 'python'] },
+  { label: '语音', ids: ['edge-tts', 'speaker', 'mic'] },
+  { label: '桌面控制', ids: ['mcp-plugin', 'mcp-toolchain'] },
+  { label: '账号', ids: ['account'] },
+];
+const ICONS = {
+  dsh: '<rect x="3" y="4" width="18" height="14" rx="2.4"/><path d="M8 20h8"/><path d="M12 18v2"/>',
+  model: '<path d="M12 3l7 4v10l-7 4-7-4V7z"/><path d="M12 12l7-4"/><path d="M12 12v9"/><path d="M12 12L5 8"/>',
+  ffmpeg: '<rect x="3" y="5" width="18" height="14" rx="2.4"/><path d="M10 9.5l5 2.5-5 2.5z"/>',
+  python: '<path d="M12 3v18"/><path d="M4 8h16"/><path d="M4 16h16"/>',
+  'edge-tts': '<path d="M4 9v6h3l5 4V5L7 9z"/><path d="M16 8.5a4.5 4.5 0 0 1 0 7"/><path d="M18.5 6a8 8 0 0 1 0 12"/>',
+  speaker: '<path d="M4 10v4h3l4 3V7L7 10z"/><path d="M15 9.5a3.5 3.5 0 0 1 0 5"/>',
+  mic: '<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/>',
+  'mcp-plugin': '<path d="M10 6V4a2 2 0 0 1 4 0v2"/><path d="M6 10H4a2 2 0 0 0 0 4h2"/><rect x="6" y="6" width="12" height="12" rx="3"/>',
+  'mcp-toolchain': '<circle cx="9" cy="9" r="3"/><circle cx="15" cy="15" r="3"/><path d="M11.2 11.2l1.6 1.6"/>',
+  account: '<circle cx="12" cy="8.5" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/>',
+};
+
+function showTab(name) {
+  const tab = document.querySelector(`.nav-item[data-tab="${name}"]`);
+  if (!tab) return;
+  document.querySelectorAll('.nav-item').forEach((x) => x.classList.toggle('active', x === tab));
+  for (const id of ['components', 'voice', 'appearance', 'behavior']) $('tab-' + id).style.display = id === name ? '' : 'none';
+  $('pageTitle').textContent = TITLES[name];
+  $('pageSub').textContent = ({
+    components: '检查运行环境与依赖',
+    voice: '唤醒词与朗读音色',
+    appearance: '语音球的样式与图标',
+    behavior: '时序与防误触发',
+  })[name] || '';
+  if (name !== 'components') loadConfig();
+}
+
+document.querySelectorAll('.nav-item').forEach((t) => t.addEventListener('click', () => {
+  location.hash = t.dataset.tab;
+  showTab(t.dataset.tab);
+}));
+window.addEventListener('hashchange', () => showTab((location.hash || '#components').slice(1)));
+if (location.hash) showTab(location.hash.slice(1));
+window.addEventListener('load', () => setTimeout(() => { const c = document.querySelector('.content'); if (c) c.scrollTop = 0; }, 80));
+
+async function refresh() {
+  try {
+    const res = await (await fetch('/api/state')).json();
+    renderDaemon(res.running);
+    renderGroups(res.components);
+    populateConfig(res.config);
+  } catch (e) {
+    $('pageSub').textContent = '无法连接本地服务';
+  }
+}
+
+function renderDaemon(pid) {
+  $('daemonDot').className = 'dot' + (pid ? ' on' : '');
+  $('daemonText').textContent = pid ? `运行中 · ${pid}` : '未运行';
+}
+
+function renderGroups(list) {
+  const box = $('groups');
+  const byId = Object.fromEntries(list.map((c) => [c.id, c]));
+  const total = list.length;
+  const ready = list.filter((c) => c.ok).length;
+  $('pageSub').textContent = `${ready}/${total} 项就绪` + (ready === total ? ' · 全部检查通过' : '');
+
+  box.innerHTML = '';
+  for (const g of GROUPS) {
+    const items = g.ids.map((id) => byId[id]).filter(Boolean);
+    if (!items.length) continue;
+    const section = document.createElement('div');
+    section.className = 'group';
+    section.innerHTML = `<div class="group-head"><span class="label">${g.label}</span><span class="rule"></span></div>
+                         <div class="grid"></div>`;
+    const grid = section.querySelector('.grid');
+    for (const c of items) grid.appendChild(card(c));
+    box.appendChild(section);
+  }
+  wire(box);
+}
+
+function card(c) {
+  const el = document.createElement('div');
+  el.className = 'card';
+  const tone = c.ok ? 'ok' : 'warn';
+  const chip = c.ok ? '<span class="chip ok">就绪</span>' : '<span class="chip miss">缺失</span>';
+  const meta = (c.detail || '').replace(/^当前: /, '');
+  const isPath = /^[A-Za-z]:[\\/]|^\//.test(meta);
+  if (c.action === 'select') el.classList.add('no-meta');
+  el.innerHTML = `
+    <div class="card-top">
+      <div class="icon ${tone}"><svg viewBox="0 0 24 24">${ICONS[c.id] || ICONS.dsh}</svg></div>
+      <div class="card-title"><div class="name">${c.name}</div>
+        <div class="meta" title="${meta.replace(/"/g, '&quot;')}">${meta}</div></div>
+      ${chip}
+    </div>
+    ${isPath && c.id !== 'mic' && c.id !== 'speaker' ? `<div class="path" title="${meta.replace(/"/g, '&quot;')}">${meta}</div>` : ''}
+    <div class="actions"></div>
+    <div class="bar"><i></i></div>
+    <div class="log"></div>`;
+  const actions = el.querySelector('.actions');
+  const meta2 = el.querySelector('.card-title .meta');
+  const path = el.querySelector('.path');
+  if (isPath) { meta2.style.display = 'none'; if (!path) actions.parentElement.querySelector('.card-top'); }
+  if (c.id === 'edge-tts' && c.ok) {
+    actions.innerHTML = `<button data-tts-test>试听音色</button>`;
+  }
+  if (!c.ok && c.action === 'install') {
+    actions.innerHTML = `<button class="primary" data-install="${c.id}">安装</button>`;
+  } else if (!c.ok && c.guide) {
+    actions.innerHTML = `<button data-guide="${c.guide}">安装说明</button>`;
+  }
+  if (c.action === 'select' && Array.isArray(c.devices)) {
+    const optsOf = (d) => {
+      const value = (d.alt || d.id || '').replace(/"/g, '&quot;');
+      const name = d.name.replace(/</g, '&lt;');
+      const sel = value === (c.current || '') ? ' selected' : '';
+      return `<option value="${value}"${sel}>${name}${d.isDefault ? ' · 系统默认' : ''}</option>`;
+    };
+    if (c.id === 'speaker') {
+      actions.innerHTML = `<select data-speaker><option value=""${!c.current ? ' selected' : ''}>跟随系统默认</option>
+        ${c.devices.map(optsOf).join('')}</select>
+        <button data-speaker-test>试听</button><button class="primary" data-speaker-save>切换</button>`;
+    } else {
+      actions.innerHTML = `<select data-mic>${c.devices.map(optsOf).join('') || '<option>未发现设备</option>'}</select>
+        <button class="primary" data-mic-save>切换</button>`;
+    }
+  }
+  return el;
+}
+
+function wire(box) {
+  box.querySelectorAll('[data-install]').forEach((b) => b.addEventListener('click', () => install(b)));
+  box.querySelectorAll('[data-guide]').forEach((b) => b.addEventListener('click', () => {
+    const url = b.dataset.guide;
+    if (url) window.open(url, '_blank'); else alert('打开 DSH → 插件 → Windows desktop automation, 安装依赖。');
+  }));
+
+  const ttsBtn = box.querySelector('[data-tts-test]');
+  if (ttsBtn) ttsBtn.addEventListener('click', async () => {
+    ttsBtn.disabled = true; ttsBtn.textContent = '播放中…';
+    await fetch('/api/speaker', { method: 'POST', body: JSON.stringify({ test: true }) });
+    setTimeout(() => { ttsBtn.disabled = false; ttsBtn.textContent = '试听音色'; }, 3500);
+  });
+
+  const micSel = box.querySelector('[data-mic]');
+  const micBtn = box.querySelector('[data-mic-save]');
+  if (micSel && micBtn) micBtn.addEventListener('click', async () => {
+    micBtn.disabled = true; micBtn.textContent = '切换中…';
+    const opt = micSel.options[micSel.selectedIndex];
+    await fetch('/api/microphone', { method: 'POST', body: JSON.stringify({ alt: micSel.value, name: opt ? opt.text : '' }) });
+    setTimeout(refresh, 3000);
+  });
+
+  const spkSel = box.querySelector('[data-speaker]');
+  const spkSave = box.querySelector('[data-speaker-save]');
+  const spkTest = box.querySelector('[data-speaker-test]');
+  if (spkSel && spkSave) {
+    spkSave.addEventListener('click', async () => {
+      spkSave.disabled = true; spkSave.textContent = '切换中…';
+      await fetch('/api/speaker', { method: 'POST', body: JSON.stringify({ id: spkSel.value }) });
+      setTimeout(refresh, 1200);
+    });
+    spkTest.addEventListener('click', async () => {
+      spkTest.disabled = true; spkTest.textContent = '播放中…';
+      await fetch('/api/speaker', { method: 'POST', body: JSON.stringify({ id: spkSel.value, test: true }) });
+      setTimeout(() => { spkTest.disabled = false; spkTest.textContent = '试听'; }, 3500);
+    });
+  }
+}
+
+async function install(btn) {
+  const component = btn.dataset.install;
+  btn.disabled = true; btn.textContent = '安装中…';
+  const cardEl = btn.closest('.card');
+  const bar = cardEl.querySelector('.bar'), fill = bar.querySelector('i'), log = cardEl.querySelector('.log');
+  bar.style.display = 'block'; log.style.display = 'block';
+  const res = await (await fetch('/api/install', { method: 'POST', body: JSON.stringify({ component }) })).json();
+  const timer = setInterval(async () => {
+    const t = await (await fetch('/api/task/' + res.id)).json();
+    fill.style.width = (t.percent || 0) + '%';
+    log.textContent = (t.log || []).slice(-6).join('\n');
+    log.scrollTop = log.scrollHeight;
+    if (t.status !== 'running') {
+      clearInterval(timer);
+      btn.disabled = false;
+      btn.textContent = t.status === 'done' ? '已完成' : '重试';
+      if (t.status === 'error') log.textContent += '\n' + t.message;
+      setTimeout(refresh, 600);
+    }
+  }, 500);
+}
+
+function populateConfig(cfg) {
+  if (!cfg) return;
+  $('triggers').value = (cfg.triggers || []).join(', ');
+  $('wakeLeadChars').value = cfg.wakeLeadChars ?? 2;
+  $('allowBareWake').checked = !!cfg.allowBareWake;
+  $('rate').value = cfg?.tts?.rate || '+0%';
+  $('voice').value = cfg?.tts?.voice || 'zh-CN-XiaoxiaoNeural';
+  $('armTimeoutMs').value = Math.round((cfg.armTimeoutMs ?? 20000) / 1000);
+  $('followUpMs').value = Math.round((cfg.followUpMs ?? 0) / 1000);
+  $('muteWhenSystemAudio').checked = cfg.muteWhenSystemAudio !== false;
+  $('muteWhileSpeaking').checked = cfg.muteWhileSpeaking !== false;
+  $('orbStyle').value = cfg.orbStyle || 'bot';
+  $('orbLogo').value = cfg.orbLogo || '';
+}
+
+async function loadConfig() { populateConfig(await (await fetch('/api/config')).json()); }
+
+async function save(patch, badge) {
+  const cfg = await (await fetch('/api/config')).json();
+  Object.assign(cfg, patch);
+  await fetch('/api/config', { method: 'POST', body: JSON.stringify(cfg) });
+  badge.classList.add('show');
+  setTimeout(() => badge.classList.remove('show'), 2200);
+  refresh();
+}
+
+$('saveVoice').addEventListener('click', async () => {
+  const current = await (await fetch('/api/config')).json();
+  save({
+    triggers: $('triggers').value.split(',').map((s) => s.trim()).filter(Boolean),
+    wakeLeadChars: Number($('wakeLeadChars').value),
+    allowBareWake: $('allowBareWake').checked,
+    tts: Object.assign({}, current.tts || {}, { voice: $('voice').value, rate: $('rate').value || '+0%' }),
+  }, $('savedVoice'));
+});
+
+$('saveOrb').addEventListener('click', async () => {
+  await fetch('/api/orb', {
+    method: 'POST',
+    body: JSON.stringify({ style: $('orbStyle').value, logo: $('orbLogo').value.trim() }),
+  });
+  const badge = $('savedOrb');
+  badge.classList.add('show');
+  setTimeout(() => badge.classList.remove('show'), 2200);
+});
+
+$('saveBehavior').addEventListener('click', () => {
+  save({
+    armTimeoutMs: Number($('armTimeoutMs').value) * 1000,
+    followUpMs: Number($('followUpMs').value) * 1000,
+    muteWhenSystemAudio: $('muteWhenSystemAudio').checked,
+    muteWhileSpeaking: $('muteWhileSpeaking').checked,
+  }, $('savedBehavior'));
+});
+
+$('btnStart').addEventListener('click', async () => {
+  await fetch('/api/daemon', { method: 'POST', body: JSON.stringify({ action: 'start' }) });
+  setTimeout(refresh, 1500);
+});
+$('btnStop').addEventListener('click', async () => {
+  await fetch('/api/daemon', { method: 'POST', body: JSON.stringify({ action: 'stop' }) });
+  setTimeout(refresh, 1500);
+});
+$('btnRefresh').addEventListener('click', () => { location.reload(); });
+
+refresh();
+setInterval(refresh, 4000);
+</script>
+</body>
+</html>

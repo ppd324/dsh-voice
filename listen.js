@@ -263,6 +263,21 @@ function ensureAudioMeter() {
   }
 }
 
+// 控制面板保存配置后写 reload.flag: 守护进程热加载, 不必重启
+const RELOAD_FLAG = path.join(__dirname, 'reload.flag');
+let lastReloadStamp = 0;
+function maybeReloadConfig() {
+  try {
+    const st = fs.statSync(RELOAD_FLAG);
+    if (st.mtimeMs <= lastReloadStamp) return;
+    lastReloadStamp = st.mtimeMs;
+    const next = JSON.parse(fs.readFileSync(path.join(__dirname, 'config.json'), 'utf8'));
+    for (const k of Object.keys(next)) CONFIG[k] = next[k];
+    log('config reloaded from control panel');
+  } catch (e) {}
+}
+setInterval(maybeReloadConfig, 1000).unref?.();
+
 function writeState(state, text) {
   liveState = { state, text: text || '' };
   const payload = {
@@ -310,6 +325,14 @@ function runProcess(cmd, args, timeoutMs) {
 }
 
 function playWav(file) {
+  // 走 play-wav.ps1, 才能把声音送到 config.speakerId 指定的设备;
+  // 之前这里直接调 SoundPlayer, 永远只能用系统默认输出。
+  const player = path.join(ROOT, 'play-wav.ps1');
+  if (fs.existsSync(player)) {
+    const args = ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', player, '-Wav', file];
+    if (CONFIG.speakerId) args.push('-DeviceId', CONFIG.speakerId);
+    return runProcess(CONFIG.pwsh, args);
+  }
   return runProcess(CONFIG.pwsh, ['-NoProfile', '-Command',
     "$p = New-Object System.Media.SoundPlayer '" + file + "'; $p.PlaySync()"]);
 }

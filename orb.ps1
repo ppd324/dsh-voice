@@ -120,6 +120,30 @@ $script:targetY = 0.0
 $script:parts = @()
 $script:prevState = 'idle'
 $script:logFile = Join-Path $PSScriptRoot 'orb.log'
+$script:configPath = Join-Path $PSScriptRoot 'config.json'
+$script:configStamp = 0
+$script:orbStyle = 'bot'
+$script:orbLogoPath = ''
+$script:logoImage = $null
+
+# 球的样式可以在控制面板里改;这里按配置文件时间戳热加载
+function Refresh-OrbStyle {
+  try {
+    $st = (Get-Item $script:configPath -ErrorAction Stop).LastWriteTimeUtc.Ticks
+    if ($st -eq $script:configStamp) { return }
+    $script:configStamp = $st
+    $cfg = Get-Content $script:configPath -Raw -Encoding UTF8 | ConvertFrom-Json
+    if ($cfg.orbStyle) { $script:orbStyle = [string]$cfg.orbStyle }
+    $logo = [string]$cfg.orbLogo
+    if ($logo -ne $script:orbLogoPath) {
+      $script:orbLogoPath = $logo
+      if ($script:logoImage) { try { $script:logoImage.Dispose() } catch {} ; $script:logoImage = $null }
+      if ($logo -and (Test-Path $logo)) {
+        try { $script:logoImage = [System.Drawing.Image]::FromFile($logo) } catch {}
+      }
+    }
+  } catch {}
+}
 
 function Write-OrbLog([string]$m) {
   try { [System.IO.File]::AppendAllText($script:logFile, (Get-Date -Format o) + ' ' + $m + [Environment]::NewLine) } catch {}
@@ -182,6 +206,35 @@ $face.add_Paint({
       $ringR = 24.0 + 1.6 * [Math]::Sin($script:phase) + 4.0 * $lvl
       $g.DrawEllipse($pen, $cx - $ringR, $cy - $ringR, $ringR * 2, $ringR * 2)
       $pen.Dispose()
+    }
+
+    # --- custom styles (replace the bot face) ------------------------------
+    if ($script:orbStyle -eq 'logo' -and $script:logoImage) {
+      $maxSide = 56.0
+      $iw = [double]$script:logoImage.Width
+      $ih = [double]$script:logoImage.Height
+      $scale = [Math]::Min($maxSide / $iw, $maxSide / $ih)
+      $dw = $iw * $scale
+      $dh = $ih * $scale
+      $g.InterpolationMode = [System.Drawing.Drawing2D.InterpolationMode]::HighQualityBicubic
+      $g.DrawImage($script:logoImage, [single]($cx - $dw / 2), [single]($cy - $dh / 2), [single]$dw, [single]$dh)
+      return
+    }
+    if ($script:orbStyle -eq 'bars') {
+      $barW = 9.0
+      $gap = 6.0
+      $shape = @(0.55, 1.0, 0.7)
+      $boost = 1.0 + 0.55 * $lvl
+      for ($i = 0; $i -lt 3; $i++) {
+        $bh = 32.0 * $shape[$i] * $boost
+        $bx = $cx - (3 * $barW + 2 * $gap) / 2 + $i * ($barW + $gap)
+        $bp = New-RoundPath $bx ($cy - $bh / 2) $barW $bh ($barW / 2)
+        $bb = New-Object System.Drawing.SolidBrush ([System.Drawing.Color]::FromArgb(255, 255, 255))
+        $g.FillPath($bb, $bp)
+        $bb.Dispose()
+        $bp.Dispose()
+      }
+      return
     }
 
     # --- head ---------------------------------------------------------------
@@ -290,6 +343,7 @@ $timer.add_Tick({
     $now = [DateTime]::Now
     if ($now -lt $script:hiddenUntil) { return }
 
+    Refresh-OrbStyle
     $s = Read-State
     $state = 'idle'; $textNow = ''; $labelNow = ''
     if ($s) {
@@ -393,7 +447,29 @@ $timer.add_Tick({
     }
 
     if ($script:lastLabel -ne $labelNow) { $label.Text = $labelNow; $script:lastLabel = $labelNow }
-    if ($script:lastCaption -ne $textNow) { $caption.Text = $textNow; $script:lastCaption = $textNow }
+    if ($script:lastCaption -ne $textNow) {
+      $caption.Text = $textNow
+      $script:lastCaption = $textNow
+      # 按字符数估算行数(中文约 22 字/行), 2~5 行自适应
+      # 用真实排版测量, 而不是按字数估算
+      $lineH = 23
+      $measured = [System.Windows.Forms.TextRenderer]::MeasureText(
+        $textNow, $caption.Font,
+        (New-Object System.Drawing.Size(($caption.Width - 6), 4000)),
+        [System.Windows.Forms.TextFormatFlags]::WordBreak)
+      $lines = [Math]::Max(2, [Math]::Min(6, [int][Math]::Ceiling($measured.Height / $lineH)))
+      $newH = 54 + $lines * $lineH + 8
+      if ($form.Height -ne $newH) {
+        $caption.Height = $lines * $lineH
+        $form.Height = $newH
+        # 圆角 Region 是按旧高度算的, 不重算会把新增的行裁掉
+        $form.Round(22)
+        $wa = [System.Windows.Forms.Screen]::PrimaryScreen.WorkingArea
+        $form.Top = $wa.Bottom - $form.Height - $Margin
+        $face.Top = [int](($newH - $face.Height) / 2)
+        $form.Invalidate()
+      }
+    }
     $face.Invalidate()
     $form.Invalidate()
     Write-Beat $state

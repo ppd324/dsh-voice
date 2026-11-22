@@ -14,7 +14,13 @@
   "minSilenceMs": 400,
   "maxSpeechMs": 15000,
   "prerollMs": 800,
-  "triggers": ["你好电脑", "嘿电脑", "嗨电脑", "你好助手", "好电脑"],
+  "triggers": [
+    "你好电脑",
+    "嘿电脑",
+    "嗨电脑",
+    "你好助手",
+    "好电脑"
+  ],
   "wakeLeadChars": 2,
   "allowBareWake": false,
   "armTimeoutMs": 20000,
@@ -29,8 +35,12 @@
     "rate": "+0%",
     "maxChars": 220,
     "fallbackToSapi": false,
-    "python": "C:/Users/<you>/.dsh/dsh-runtimes/dsh-primary-runtime/dependencies/python/python.exe"
+    "python": "C:/Users/<you>/.dsh/dsh-runtimes/dsh-primary-runtime/dependencies/python/python.exe",
+    "enabled": true
   },
   "corrections": {},
-  "aliases": {}
+  "aliases": {},
+  "automation": false,
+  "orbStyle": "bot",
+  "orbLogo": ""
 }

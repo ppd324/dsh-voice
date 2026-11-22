@@ -18,7 +18,22 @@ New-Item -ItemType Directory -Force -Path $stage | Out-Null
 New-Item -ItemType Directory -Force -Path (Join-Path $stage 'bin') | Out-Null
 
 Step 'copying the voice layer'
-Copy-Item (Join-Path $voice '*') $stage -Recurse -Force -Exclude @('dist', 'state.json', 'orb.heartbeat', '*.log', 'voice-session.json', 'cache')
+$skip = @('dist', 'installer', 'state.json', 'orb.heartbeat', 'watchdog.heartbeat',
+         'audio-activity.json', 'audio-activity.pid', 'daemon.pid', 'watchdog.pid',
+         'voice-session.json', 'command-queue.jsonl', 'config.json', 'config.example.json',
+         'cache', '*.log', 'demo*', 'test-*', '*.mp4', '*.gif', '*.wav', 'dsh-exe.txt', 'screenshots', 'orb-*.png',
+         'icon-preview.png', 'icon-zoom*.png', 'taskbar-icon*.png', 'titlebar-icon.png', 'icon-zoom.png')
+Copy-Item (Join-Path $voice '*') $stage -Recurse -Force -Exclude $skip
+Copy-Item (Join-Path $voice 'installer') $stage -Recurse -Force
+Copy-Item (Join-Path $voice 'config.example.json') (Join-Path $stage 'config.example.json') -Force
+Write-Output '[..] packaged config.example.json (installer fills real paths)'
+
+# capture artifacts and demo media must not ship
+Step 'pruning artifacts'
+Remove-Item (Join-Path $stage 'gui\*.png') -Force -ErrorAction SilentlyContinue
+Remove-Item (Join-Path $stage 'screenshots') -Recurse -Force -ErrorAction SilentlyContinue
+Get-ChildItem $stage -Recurse -Include *.mp4,*.gif,*.wav -File -ErrorAction SilentlyContinue |
+  Remove-Item -Force -ErrorAction SilentlyContinue
 
 Step 'copying ffmpeg'
 $ffmpeg = Join-Path $env:USERPROFILE '.dsh\tools\bin\ffmpeg.exe'

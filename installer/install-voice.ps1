@@ -193,8 +193,28 @@ if (-not (Test-Path (Join-Path $runtimeModules 'sherpa-onnx-node'))) {
 
 # --- 9. write config.json with detected paths ------------------------------
 $configPath = Join-Path $target 'config.json'
+$example = Join-Path $target 'config.example.json'
+if (-not (Test-Path $configPath) -and (Test-Path $example)) {
+  Copy-Item $example $configPath -Force
+  Ok 'seeded config.json from config.example.json'
+}
 $config = Get-Content $configPath -Raw -Encoding UTF8 | ConvertFrom-Json
 $config.installDir = $runtimeModules
+
+# pick a capture device if the config still has a placeholder
+if (-not $config.audioDevice -or $config.audioDevice -like '*<*' -or $config.audioDevice -eq '') {
+  Step 'detecting the microphone'
+  $list = (& $ffmpeg -hide_banner -list_devices true -f dshow -i dummy 2>&1 | Out-String)
+  $names = [regex]::Matches($list, '"([^"]+)"\s*\(audio\)') | ForEach-Object { $_.Groups[1].Value }
+  $pick = $names | Where-Object { $_ -match '麦克风|Microphone|Mic' } | Select-Object -First 1
+  if (-not $pick) { $pick = $names | Select-Object -First 1 }
+  if ($pick) { $config.audioDevice = $pick; Ok ('microphone: ' + $pick) } else { Bad 'no capture device found; set audioDevice in config.json' }
+}
+# default workspace (DSH's own default) when not set
+if (-not $config.workspaceDir -or $config.workspaceDir -like '*<*') {
+  $ws = Join-Path $env:USERPROFILE 'Documents\deepseek-harness\default-workspace'
+  if (Test-Path $ws) { $config.workspaceDir = $ws }
+}
 $config.ffmpeg = $ffmpeg
 $config.pwsh = Join-Path $env:WINDIR 'System32\WindowsPowerShell\v1.0\powershell.exe'
 $config.tts.python = $python
@@ -273,6 +293,21 @@ Set-ItemProperty -Path $key -Name 'DSHVoice' -Value ('"' + $wscript + '" "' + $s
 Set-ItemProperty -Path $key -Name 'DeepSeekHarness' -Value ('"' + $DshExe + '"') -Type String
 Remove-ItemProperty -Path $key -Name 'DSHVoiceWatchdog' -ErrorAction SilentlyContinue
 Ok 'autostart entries written'
+
+# --- 12b. shortcuts --------------------------------------------------------
+# Start-menu shortcut carries the app icon; the ZIP install would otherwise have none.
+try {
+  $shell = New-Object -ComObject WScript.Shell
+  $lnk = Join-Path ([Environment]::GetFolderPath('Programs')) 'DSH Voice.lnk'
+  $sc = $shell.CreateShortcut($lnk)
+  $sc.TargetPath = (Join-Path $env:WINDIR 'System32\wscript.exe')
+  $sc.Arguments = '"' + (Join-Path $target 'start-gui.vbs') + '"'
+  $sc.WorkingDirectory = $target
+  $icon = Join-Path $target 'assets\icon.ico'
+  if (Test-Path $icon) { $sc.IconLocation = $icon }
+  $sc.Save()
+  Ok ('start menu shortcut -> ' + $lnk)
+} catch { Bad ('could not create shortcut: ' + $_.Exception.Message) }
 
 # --- 13. start -------------------------------------------------------------
 if (-not $SkipStart) {

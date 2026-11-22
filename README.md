@@ -71,6 +71,7 @@ The orb face and the UI theme live on the **Appearance** page (light theme above
 | Python 3.10+ | for `edge-tts`; DSH ships one |
 | ffmpeg | for microphone capture and mp3→wav conversion |
 | Microphone | any Windows capture device |
+| PowerShell 7 (`pwsh`) | required for per-device audio output (NAudio is netstandard2.0) |
 | ~250 MB disk | SenseVoice model, downloaded on first run |
 
 ## Install
@@ -118,6 +119,10 @@ The installer
 | `watchdog.ps1` | restarts the daemon when its pid goes stale |
 | `start-all.vbs` / `start-all.ps1` | WMI-detached launcher for the whole stack |
 | `first-run.ps1` | microphone/level/recognition/TTS check wizard |
+| `gui/server.js` + `gui/public/` | control panel: component checks, installer, settings |
+| `play-wav.ps1` | plays a wav on a chosen output device (NAudio/WASAPI) |
+| `create-shortcut.ps1` | Start-menu / desktop shortcut with the app icon |
+| `assets/` | application icons |
 | `installer/` | installer, packaging script, Inno Setup script |
 
 ## Configuration

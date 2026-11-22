@@ -23,6 +23,8 @@ Compression=lzma2/max
 SolidCompression=yes
 WizardStyle=modern
 UninstallDisplayName={#AppName}
+SetupIconFile={#SourceDir}\assets\icon.ico
+UninstallDisplayIcon={app}\assets\icon.ico
 
 [Languages]
 Name: "chinesesimplified"; MessagesFile: "compiler:Languages\ChineseSimplified.isl"
@@ -34,11 +36,14 @@ Source: "{#SourceDir}\bin\ffmpeg.exe"; DestDir: "{app}\bin"; Flags: ignoreversio
 
 [Icons]
 Name: "{userprograms}\DSH Voice\First run check"; Filename: "{sys}\WindowsPowerShell\v1.0\powershell.exe"; \
-  Parameters: "-NoProfile -ExecutionPolicy Bypass -File ""{app}\first-run.ps1"""; WorkingDir: "{app}"
+  Parameters: "-NoProfile -ExecutionPolicy Bypass -File ""{app}\first-run.ps1"""; WorkingDir: "{app}"; \
+  IconFilename: "{app}\assets\icon.ico"
 Name: "{userprograms}\DSH Voice\Start voice assistant"; Filename: "{sys}\wscript.exe"; \
-  Parameters: """{app}\start-daemon.vbs"""; WorkingDir: "{app}"
+  Parameters: """{app}\start-daemon.vbs"""; WorkingDir: "{app}"; \
+  IconFilename: "{app}\assets\icon.ico"
 Name: "{userprograms}\DSH Voice\Stop voice assistant"; Filename: "{sys}\WindowsPowerShell\v1.0\powershell.exe"; \
-  Parameters: "-NoProfile -ExecutionPolicy Bypass -File ""{app}\stop-daemon.ps1"""; WorkingDir: "{app}"
+  Parameters: "-NoProfile -ExecutionPolicy Bypass -File ""{app}\stop-daemon.ps1"""; WorkingDir: "{app}"; \
+  IconFilename: "{app}\assets\icon.ico"
 
 [Run]
 Filename: "{sys}\WindowsPowerShell\v1.0\powershell.exe"; \
@@ -51,6 +56,7 @@ Filename: "{sys}\WindowsPowerShell\v1.0\powershell.exe"; \
 [UninstallRun]
 Filename: "{sys}\WindowsPowerShell\v1.0\powershell.exe"; \
   Parameters: "-NoProfile -ExecutionPolicy Bypass -File ""{app}\stop-daemon.ps1"""; Flags: runhidden
+  IconFilename: "{app}\assets\icon.ico"
 
 [UninstallDelete]
 Type: filesandordirs; Name: "{app}\cache"

@@ -8,12 +8,7 @@ Set fso = CreateObject("Scripting.FileSystemObject")
 here = fso.GetParentFolderName(WScript.ScriptFullName)
 js = fso.BuildPath(here, "listen.js")
 orb = fso.BuildPath(here, "orb.ps1")
-exeFile = fso.BuildPath(here, "dsh-exe.txt")
-If fso.FileExists(exeFile) Then
-  exe = Trim(fso.OpenTextFile(exeFile, 1).ReadAll())
-Else
-  exe = "D:\dsh\DeepSeek Harness.exe"
-End If
+exe = "D:\dsh\DeepSeek Harness.exe"
 ps = sh.ExpandEnvironmentStrings("%WINDIR%") & "\System32\WindowsPowerShell\v1.0\powershell.exe"
 nodeExe = sh.ExpandEnvironmentStrings("%USERPROFILE%") & "\.dsh\dsh-runtimes\dsh-primary-runtime\dependencies\node\bin\node.exe"
 

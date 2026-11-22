@@ -9,6 +9,7 @@ Falls back to exiting non-zero so the caller can use SAPI instead.
 import asyncio
 import json
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -33,12 +34,63 @@ def _find_ffmpeg() -> str:
 
 
 FFMPEG = _find_ffmpeg()
-PWSH = r"C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe"
+
+
+def _find_pwsh() -> str:
+    """Prefer PowerShell 7: NAudio is netstandard2.0 and 5.1 cannot load it.
+
+    Order: config.json "pwsh" -> known pwsh 7 installs -> the legacy 5.1 shell.
+    """
+    try:
+        with open(os.path.join(HERE, "config.json"), encoding="utf-8") as fh:
+            configured = json.load(fh).get("pwsh") or ""
+        if configured and os.path.isfile(configured) and "pwsh" in os.path.basename(configured).lower():
+            return configured
+    except Exception:
+        pass
+    for cand in (
+        r"C:\Program Files\PowerShell\7\pwsh.exe",
+        r"C:\Program Files (x86)\PowerShell\7\pwsh.exe",
+        shutil.which("pwsh"),
+    ):
+        if cand and os.path.isfile(cand):
+            return cand
+    return r"C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe"
+
+
+PWSH = _find_pwsh()
 
 PS_PLAY = (
     "$p = New-Object System.Media.SoundPlayer '{wav}';"
     "$p.PlaySync()"
 )
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+
+
+def _speaker_id() -> str:
+    """Optional output device id; empty means the system default endpoint."""
+    override = os.environ.get("DSH_VOICE_SPEAKER")
+    if override is not None:
+        return override
+    try:
+        with open(os.path.join(HERE, "config.json"), encoding="utf-8") as fh:
+            return str(json.load(fh).get("speakerId") or "")
+    except Exception:
+        return ""
+
+
+def _play(wav: str) -> None:
+    """Play on the configured device via NAudio; fall back to SoundPlayer."""
+    player = os.path.join(HERE, "play-wav.ps1")
+    if os.path.isfile(player):
+        cmd = [PWSH, "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", player, "-Wav", wav]
+        device = _speaker_id()
+        if device:
+            cmd += ["-DeviceId", device]
+        if subprocess.run(cmd, check=False).returncode == 0:
+            return
+    subprocess.run([PWSH, "-NoProfile", "-Command", PS_PLAY.format(wav=wav)], check=False)
 
 
 def cache_only(args) -> int:
@@ -102,7 +154,7 @@ def main() -> int:
             print(conv.stderr.decode("utf-8", "replace")[:400], file=sys.stderr)
             return 5
 
-        subprocess.run([PWSH, "-NoProfile", "-Command", PS_PLAY.format(wav=wav)], check=False)
+        _play(wav)
         return 0
     finally:
         for f in (mp3, wav):

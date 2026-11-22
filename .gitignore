@@ -25,3 +25,15 @@ models/
 # python build artifacts
 __pycache__/
 *.pyc
+playback.log
+reload.flag
+command-queue.jsonl
+gui/screenshot-*.png
+gui/dsh-*.png
+gui/shot-*.png
+gui/icon-zoom*.png
+gui/taskbar-*.png
+gui/titlebar-*.png
+gui/icon-preview.png
+gui/glyph-compare.png
+gui/demo-*.png
