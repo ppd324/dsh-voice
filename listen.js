@@ -504,7 +504,16 @@ async function waitForIdle(command) {
 }
 
 // --- CLI mode: dsh <profile> "<task>" runs one fresh session; the answer comes from stdout ---
-const CLI_JS = 'D:/dsh/resources/app.asar/dsh/node_modules/@deepseek-ai/dsh/lib/bin.js';
+// CLI entry inside the DSH install; derived from the executable so non-default
+// install locations work, with the historical default as a fallback.
+const CLI_JS = (() => {
+  const parts = ['resources', 'app.asar', 'dsh', 'node_modules', '@deepseek-ai', 'dsh', 'lib', 'bin.js'];
+  try {
+    const derived = path.join(path.dirname(DSH_EXE), ...parts);
+    if (fs.existsSync(derived)) return derived;
+  } catch (e) {}
+  return 'D:/dsh/resources/app.asar/dsh/node_modules/@deepseek-ai/dsh/lib/bin.js';
+})();
 const VOICE_SESSION_FILE = path.join(__dirname, 'voice-session.json');
 
 function loadVoiceSession() {
