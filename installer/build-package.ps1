@@ -81,13 +81,19 @@ if (-not $SkipZip) {
 }
 
 $iscc = @(
+  (Join-Path $env:LOCALAPPDATA 'InnoSetup6\ISCC.exe'),
   'C:\Program Files (x86)\Inno Setup 6\ISCC.exe',
-  'C:\Program Files\Inno Setup 6\ISCC.exe'
+  'C:\Program Files\Inno Setup 6\ISCC.exe',
+  'C:\Program Files\Inno Setup 7\ISCC.exe'
 ) | Where-Object { Test-Path $_ } | Select-Object -First 1
 if ($iscc) {
   Step 'building the Inno Setup installer'
-  & $iscc (Join-Path $voice 'installer\DSHVoice.iss') | Out-Null
-  Ok 'setup.exe built'
+  $out = & $iscc (Join-Path $voice 'installer\DSHVoice.iss') 2>&1
+  if ($LASTEXITCODE -eq 0) { Ok 'setup.exe built' }
+  else {
+    Write-Output '[!!] Inno Setup compile failed:'
+    $out | Select-Object -Last 4 | ForEach-Object { Write-Output ('     ' + $_) }
+  }
 } else {
   Write-Output '[..] Inno Setup not found - ZIP only (install DSHVoice.iss with ISCC.exe later)'
 }

@@ -76,11 +76,15 @@ The orb face and the UI theme live on the **Appearance** page (light theme above
 
 ## Install
 
+Download either asset from the [latest release](https://github.com/ppd324/dsh-voice/releases):
+
+- **`DSHVoice-Setup-0.2.0.exe`** — Windows installer with a wizard, Start-menu shortcuts and
+  an uninstaller (requires DSH already installed and signed in).
+- **`DSHVoice-0.2.0.zip`** — portable: unzip and run `install.cmd`.
+
+Then verify the microphone, recognition and voice output:
+
 ```powershell
-# 1. install DSH Desktop and sign in once
-# 2. from the release package:
-.\install.cmd            # or: pwsh -File installer\install-voice.ps1
-# 3. verify microphone, recognition and voice:
 pwsh -File first-run.ps1
 ```
 

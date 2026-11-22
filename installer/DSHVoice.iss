@@ -11,6 +11,9 @@
 AppId={{8E2C1F0A-6D4B-4E2A-9B77-2C1A5E9D3F10}
 AppName={#AppName}
 AppVersion={#AppVersion}
+VersionInfoVersion=0.2.0.0
+VersionInfoCompany=DSH Voice
+VersionInfoProductName=DSH Voice
 AppPublisher={#AppPublisher}
 DefaultDirName={localappdata}\DSHVoice
 DisableProgramGroupPage=yes
@@ -27,7 +30,7 @@ SetupIconFile={#SourceDir}\assets\icon.ico
 UninstallDisplayIcon={app}\assets\icon.ico
 
 [Languages]
-Name: "chinesesimplified"; MessagesFile: "compiler:Languages\ChineseSimplified.isl"
+Name: "chinesesimplified"; MessagesFile: "languages\ChineseSimplified.isl"
 
 [Files]
 Source: "{#SourceDir}\*"; DestDir: "{app}"; Flags: recursesubdirs ignoreversion; \
@@ -56,7 +59,6 @@ Filename: "{sys}\WindowsPowerShell\v1.0\powershell.exe"; \
 [UninstallRun]
 Filename: "{sys}\WindowsPowerShell\v1.0\powershell.exe"; \
   Parameters: "-NoProfile -ExecutionPolicy Bypass -File ""{app}\stop-daemon.ps1"""; Flags: runhidden
-  IconFilename: "{app}\assets\icon.ico"
 
 [UninstallDelete]
 Type: filesandordirs; Name: "{app}\cache"
