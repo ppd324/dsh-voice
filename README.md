@@ -23,6 +23,25 @@ answers out loud.
 open in the top-left corner. The complete three-turn recording, session context included,
 is [docs/demo.mp4](docs/demo.mp4) (3.4 MB, audio included).*
 
+## Control panel
+
+A small local control panel detects every dependency, installs what is missing (with live
+progress), and edits the voice settings — no config files by hand.
+
+| Components | Voice & wake word |
+|---|---|
+| ![Components](docs/screenshots/gui-components.png) | ![Voice](docs/screenshots/gui-voice.png) |
+
+Every check is automatic: DSH runtime and version, the ASR model (SHA-256 verified), ffmpeg,
+Python, `edge-tts`, the Windows-MCP plugin and toolchain, the microphone, and the signed-in
+account. Anything missing gets an install button with a progress bar.
+
+The orb face and the UI theme live on the **Appearance** page (light theme above, dark below):
+
+<p align="center">
+  <img src="docs/screenshots/gui-appearance-dark.png" width="820" alt="Appearance page in dark mode">
+</p>
+
 ## What it does
 
 - **Local speech recognition** — SenseVoiceSmall (int8) + Silero VAD through

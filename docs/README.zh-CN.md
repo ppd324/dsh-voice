@@ -17,6 +17,23 @@
 
 > 录制的是真实桌面,发布前如果不想露出壁纸和图标,可以换裁剪版或先模糊处理。
 
+## 控制面板
+
+一个本地小面板:自动检测所有依赖,缺什么点一下就能装(带实时进度),语音参数也能在这里改,不用手写配置文件。
+
+| 组件检测 | 语音与唤醒 |
+|---|---|
+| ![组件](screenshots/gui-components.png) | ![语音](screenshots/gui-voice.png) |
+
+检测项包括:DSH 运行时与版本、识别模型(SHA-256 校验)、ffmpeg、Python、edge-tts、
+Windows-MCP 插件与工具链、麦克风、账号登录状态。缺失项会显示「安装」按钮和进度条。
+
+球的图标样式与界面主题在**外观**页(下图为深色主题):
+
+<p align="center">
+  <img src="screenshots/gui-appearance-dark.png" width="820" alt="外观页(深色)">
+</p>
+
 ## 安装
 
 ```powershell
