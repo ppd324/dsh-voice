@@ -8,7 +8,7 @@ param(
 $ErrorActionPreference = 'Stop'
 $voice = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)   # ...\voice
 $stage = Join-Path $OutDir 'DSHVoice'
-$version = '0.1.0'
+$version = '0.2.0'
 
 function Step($m) { Write-Output ('[..] ' + $m) }
 function Ok($m)   { Write-Output ('[ok] ' + $m) }

@@ -3,7 +3,7 @@
 ; Produces DSHVoice-Setup-<version>.exe in ..\..\dist
 
 #define AppName "DSH Voice"
-#define AppVersion "0.1.0"
+#define AppVersion "0.2.0"
 #define AppPublisher "DSH Voice"
 #define SourceDir ".."
 
